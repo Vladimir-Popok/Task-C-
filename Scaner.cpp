@@ -35,7 +35,7 @@ void check_event_line(const std::string& line, int line_number, Managment& manag
         if (!(iss >> table_number)) {
             throw std::invalid_argument("Invalid event format");
         }
-    }
+    } 
 
     Time event_time = parse_time(time_str);
 
@@ -55,10 +55,10 @@ void check_event_line(const std::string& line, int line_number, Managment& manag
         managment.sit(client_name, event_time, table_number, SIT);
         break;
     case 3:
-        managment.came(client_name, event_time, WAITING);
+        managment.waiting(client_name, event_time, WAITING);
         break;
     case 4:
-        managment.came(client_name, event_time, EXIT);
+        managment.exit(client_name, event_time, EXIT);
         break;
     }
 }
@@ -68,7 +68,7 @@ void check_input_file(const std::string& filename) {
     std::ifstream infile(filename);
     if (!infile) {
         std::cerr << "Cannot open file: " << filename << std::endl;
-        return;
+        std::abort();
     }
 
     std::string line;
@@ -100,7 +100,7 @@ void check_input_file(const std::string& filename) {
     std::string open_time_str, close_time_str;
     if (!(iss >> open_time_str >> close_time_str)) {
         std::cerr << "Error in line " << line_number << ": invalid time format" << std::endl;
-        return;
+        std::abort();
     }
 
     Time start, end;
@@ -110,12 +110,12 @@ void check_input_file(const std::string& filename) {
     }
     catch (const std::exception& e) {
         std::cerr << "Error in line " << line_number << ": " << e.what() << std::endl;
-        return;
+        std::abort();
     }
 
     if (!std::getline(infile, line)) {
         std::cerr << "Missing hourly rate" << std::endl;
-        return;
+        std::abort();
     }
     line_number++;
     int hourly_pay;
@@ -127,18 +127,18 @@ void check_input_file(const std::string& filename) {
     }
     catch (const std::exception& e) {
         std::cerr << "Error in line " << line_number << ": " << e.what() << std::endl;
-        return;
+        std::abort();
     }
     Managment managment = Managment(table_count, hourly_pay, start, end);
-
+    std::cout << start << '\n';
     while (std::getline(infile, line)) {
         line_number++;
         try {
-           
             check_event_line(line, line_number, managment);
         }
         catch (const std::exception& e) {
             std::cerr << "Error in line " << line_number << ": " << e.what() << std::endl;
+            std::abort();
         }
     }
     managment.closed();

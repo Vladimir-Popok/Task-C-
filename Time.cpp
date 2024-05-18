@@ -1,6 +1,6 @@
 #include "Time.h"
 
-Time::Time(int hours, int minutes) {
+Time::Time(unsigned int hours, unsigned int minutes) {
 	if (minutes > 59 || hours > 23) {
 		std::invalid_argument("Invalid time format in event");
 	}
@@ -59,9 +59,8 @@ Time operator+ (const Time& t1, const Time& t2) {
 		minutes = t1.m_minutes + t2.m_minutes - 60;
 	}
 	else {
-		minutes = t1.m_minutes + t2.m_minutes - 60;
+		minutes = t1.m_minutes + t2.m_minutes;
 	}
-
 	return Time(hours, minutes);
 }
 

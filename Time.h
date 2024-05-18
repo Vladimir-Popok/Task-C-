@@ -10,7 +10,7 @@ class Time {
 
 public:
 	Time(){}
-	Time(int hours, int minutes);
+	Time(unsigned int hours, unsigned int minutes);
 	Time(const Time& other);
 
 	Time& operator=(const Time& other);

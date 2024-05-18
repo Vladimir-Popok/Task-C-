@@ -16,6 +16,7 @@ public:
 	BHours& operator=(const BHours& other);
 	
 	bool valid_time(Time time);
+	bool is_nt() { return nt; }
 
 	Time usage_time(const Time& start, const Time& end);
 

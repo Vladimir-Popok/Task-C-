@@ -5,7 +5,7 @@ Managment::Managment(unsigned int table_count, unsigned int hourly_pay, const Ti
 	m_table_count = table_count;
 	m_hourly_pay = hourly_pay;
 	m_bh = BHours(start, end);
-	std::vector<bool>m_tables(m_table_count);
+	m_tables = std::vector<bool>(m_table_count);
 	m_queue = Queue(m_table_count);
 	m_visitors = Visitors();
 	m_data = Data(m_table_count);
@@ -15,12 +15,12 @@ Managment::Managment(unsigned int table_count, unsigned int hourly_pay, const Ti
 void Managment::came(const std::string& name, const Time& now, Code code) {
 	
 	if (last_event != nullptr) {
-		if (!(BHours(now, m_bh.getEnd()).valid_time(*last_event))) {
+		if (now < *last_event && !(m_bh.is_nt())) {
 			throw std::invalid_argument("Wrong event time!");
 		}
-	}
+	} 
 	
-	if (now > m_bh.getEnd() || now == m_bh.getStart()) {
+	if (now > m_bh.getEnd() || now == m_bh.getEnd()) {
 		closed();
 	}
 	std::cout << now << " " << code << " " << name << '\n';
@@ -31,22 +31,24 @@ void Managment::came(const std::string& name, const Time& now, Code code) {
 	}
 	
 	m_visitors.insert(name, S_CAME);
-	std::cout << m_visitors.get(name) << "\n";
+	if (last_event == nullptr) {
+		last_event = new Time;
+	}
 	*last_event = now;
 }
 
 void Managment::sit(const std::string& name, const Time& now, int table_number, Code code) {
 
 	if (last_event != nullptr) {
-		if (!(BHours(now, m_bh.getEnd()).valid_time(*last_event))) {
+		if (now < *last_event && !(m_bh.is_nt())) {
 			throw std::invalid_argument("Wrong event time!");
 		}
-	}
-
-	if (now > m_bh.getEnd() || now == m_bh.getStart()) {
+	} 
+	if (now > m_bh.getEnd() || now == m_bh.getEnd()) {
 		closed();
 	}
-	std::cout << now << " " << code << " " << name << '\n';
+
+	std::cout << now << " " << code << " " << name << " " << table_number << '\n';
 	int status = m_visitors.get(name);
 	if (status == NOT_FOUND) {
 		std::cout << now << " " << ERROR << " " << "ClientUnknown\n";
@@ -61,18 +63,19 @@ void Managment::sit(const std::string& name, const Time& now, int table_number, 
 	if (status > 0) {
 		get_up(name, now);
 	}
-	m_data.sit(table_number, now);
+	m_tables[table_number - 1] = true;
+	m_data.sit(table_number - 1, now);
 	m_visitors.insert(name, table_number);
 	*last_event = now;
 }
 
 void Managment::waiting(const std::string& name, const Time& now, Code code) {
 	if (last_event != nullptr) {
-		if (!(BHours(now, m_bh.getEnd()).valid_time(*last_event))) {
+		if (now < *last_event && !(m_bh.is_nt())) {
 			throw std::invalid_argument("Wrong event time!");
 		}
 	}
-	if (now > m_bh.getEnd() || now == m_bh.getStart()) {
+	if (now > m_bh.getEnd() || now == m_bh.getEnd()) {
 		closed();
 	}
 	std::cout << now << " " << code << " " << name << '\n';
@@ -81,16 +84,16 @@ void Managment::waiting(const std::string& name, const Time& now, Code code) {
 		std::cout << now << " " << ERROR << " " << "ClientUnknown\n";
 		return;
 	}
-	
-	if (!m_queue.insert(name)) {
-		exit(name, now, CLOSED);
-	}
 
 	for (bool flag : m_tables) {
 		if (flag == false) {
 			std::cout << now << " " << ERROR << " " << "ICanWaitNoLonger!\n";
 			return;
 		}
+	}
+
+	if (!m_queue.insert(name)) {
+		exit(name, now, CLOSED);
 	}
 
 	if (status > 0) {
@@ -102,11 +105,11 @@ void Managment::waiting(const std::string& name, const Time& now, Code code) {
 
 void Managment::exit(const std::string& name, const Time& now, Code code) {
 	if (last_event != nullptr) {
-		if (!(BHours(now, m_bh.getEnd()).valid_time(*last_event))) {
+		if (now < *last_event && !(m_bh.is_nt())) {
 			throw std::invalid_argument("Wrong event time!");
 		}
-	}
-	if (now > m_bh.getEnd() || now == m_bh.getStart()) {
+	} 
+	if (now > m_bh.getEnd() || now == m_bh.getEnd()) {
 		closed();
 	}
 	std::cout << now << " " << code << " " << name << '\n';
@@ -125,10 +128,10 @@ void Managment::exit(const std::string& name, const Time& now, Code code) {
 void Managment::get_up(const std::string& name, const Time& now) {
 	int free_table = m_visitors.get(name);
 	m_tables[free_table - 1] = false;
+	m_data.get_up(free_table - 1, now);
 	if (!m_queue.is_empty()) {
-		sit(name, now, free_table, UNDER_FLOW);
+		sit(m_queue.get(), now, free_table, UNDER_FLOW);
 	}
-	m_data.get_up(free_table, now);
 	m_visitors.insert(name, S_CAME);
 }
 
@@ -138,6 +141,7 @@ void Managment::closed() {
 
 	Time closed_time = m_bh.getEnd();
 	for (const auto& pair : sortedMap) {
+		m_data.get_up(m_visitors.get(pair.first) - 1, closed_time);
 		std::cout << closed_time << " " << CLOSED << " " << pair.first << '\n';
 	}
 	uns_map.clear();
