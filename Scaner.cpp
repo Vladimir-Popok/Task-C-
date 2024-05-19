@@ -147,12 +147,11 @@ void check_input_file(const std::string& filename) {
 }
 
 int main(int argc, char* argv[]) {
-    /*if (argc != 2) {
+    if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
         return 1;
-    } */
-    std::string filename = "test.txt";
-    //std::string filename = argv[1];
+    } 
+    std::string filename = argv[1];
     check_input_file(filename);
 
     return 0;
