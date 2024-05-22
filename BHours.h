@@ -1,5 +1,6 @@
 #pragma once
 #include "Time.h"
+#include <string>
 
 class BHours {
 	Time m_start;

@@ -5,6 +5,7 @@
 #include "Data.h"
 #include <vector>
 #include <map>
+#include <string>
 
 
 enum Code {
